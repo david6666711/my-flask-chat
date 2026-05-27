@@ -1,0 +1,6 @@
+Flask==3.0.2
+Flask==3.0.2
+flask-sock==0.7.0
+gunicorn==21.2.0
+uvicorn==0.28.0
+asgiref==3.7.2

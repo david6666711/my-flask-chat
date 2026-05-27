@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Админка — Вход</title>
+    <style>
+        body { background: #0b0c10; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 40px; width: 300px; text-align: center; }
+        h2 { margin-bottom: 20px; color: #fff; }
+        input[type="password"] { width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); padding: 12px; border-radius: 10px; color: #fff; font-size: 14px; outline: none; box-sizing: border-box; margin-bottom: 15px; }
+        button { width: 100%; background: #fff; color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        button:hover { background: #ddd; }
+        .error { color: #ff5555; font-size: 13px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>🔐 Админка</h2>
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+        <form method="POST">
+            <input type="password" name="password" placeholder="Пароль" autofocus>
+            <button type="submit">Войти</button>
+        </form>
+    </div>
+</body>
+</html>
