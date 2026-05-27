@@ -21,7 +21,6 @@ clients_lock = threading.Lock()
 
 ADMIN_PASSWORD = 'admin123'
 
-# Шифрование
 ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
 fernet = Fernet(ENCRYPTION_KEY.encode()) if ENCRYPTION_KEY else None
 
@@ -36,7 +35,7 @@ def decrypt(text):
     try:
         return fernet.decrypt(text.encode()).decode()
     except:
-        return text  # старые незашифрованные сообщения вернём как есть
+        return text
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -85,7 +84,6 @@ def chat(ws):
             try:
                 packet = json.loads(data)
                 packet['time'] = datetime.now().strftime('%H:%M')
-
                 new_msg = Message(
                     username=packet.get('username', 'Аноним'),
                     message=encrypt(packet.get('message', '')),
@@ -94,7 +92,6 @@ def chat(ws):
                 )
                 db.session.add(new_msg)
                 db.session.commit()
-
                 broadcast(packet)
             except Exception as e:
                 print(f"Ошибка сохранения: {e}")
@@ -113,15 +110,11 @@ def admin():
             session['admin'] = True
             return redirect(url_for('admin'))
         return render_template('admin_login.html', error='Неверный пароль')
-
     if not session.get('admin'):
         return render_template('admin_login.html', error=None)
-
     messages_list = Message.query.all()
-    # Расшифровываем для отображения в админке
     for msg in messages_list:
         msg.message = decrypt(msg.message)
-
     return render_template('admin.html', messages=messages_list, clients=len(clients))
 
 @app.route('/admin/clear', methods=['POST'])
