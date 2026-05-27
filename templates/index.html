@@ -144,8 +144,47 @@
             chat.scrollTop = chat.scrollHeight;
         };
 
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            // Если пришла команда очистки от админа
+            if (data.system) {
+                chat.innerHTML = ''; 
+                const sys = document.createElement('div');
+                sys.className = 'sys-msg';
+                sys.style.color = '#ffa500';
+                sys.innerText = `⚙️ ${data.system}`;
+                chat.appendChild(sys);
+                return;
+            }
+
+            const msgWrapper = document.createElement('div');
+            msgWrapper.className = 'msg-wrapper';
+            
+            const meta = document.createElement('div');
+            meta.className = 'msg-meta';
+            meta.innerHTML = `<strong>${data.username}</strong> <span>${data.time || ''}</span>`;
+            msgWrapper.appendChild(meta);
+            
+            if (data.message) {
+                const text = document.createElement('div');
+                text.className = 'msg-text';
+                text.innerText = data.message;
+                msgWrapper.appendChild(text);
+            }
+            
+            if (data.image) {
+                const img = document.createElement('img');
+                img.src = data.image;
+                msgWrapper.appendChild(img);
+            }
+            
+            chat.appendChild(msgWrapper);
+            chat.scrollTop = chat.scrollHeight;
+        };
+
         fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
+            const file = e.target.files[0]; // Получаем первый выбранный файл
             if (!file) return;
             const reader = new FileReader();
             reader.onload = () => {
@@ -164,16 +203,19 @@
             const packet = {
                 username: name,
                 message: text,
-                image: attachedImageBase64,
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                image: attachedImageBase64
             };
 
             if (ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(packet));
             }
 
+            // Очистка полей ввода
             textInput.value = '';
             attachedImageBase64 = null;
+            fileInput.value = '';
+            fileLabel.innerText = '📎 Прикрепить картинку (необязательно)';
+            fileLabel.classList.remove('file-ready');
         }
 
         sendBtn.addEventListener('click', sendMessage);
