@@ -1,7 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, Response
 from flask_sock import Sock
 from flask_sqlalchemy import SQLAlchemy
-from cryptography.fernet import Fernet
 import json
 import threading
 import os
@@ -21,22 +20,6 @@ clients_lock = threading.Lock()
 
 ADMIN_PASSWORD = 'admin123'
 
-ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
-fernet = Fernet(ENCRYPTION_KEY.encode()) if ENCRYPTION_KEY else None
-
-def encrypt(text):
-    if not text or not fernet:
-        return text
-    return fernet.encrypt(text.encode()).decode()
-
-def decrypt(text):
-    if not text or not fernet:
-        return text
-    try:
-        return fernet.decrypt(text.encode()).decode()
-    except:
-        return text
-
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False)
@@ -55,19 +38,18 @@ def broadcast(data):
                 client.send(json.dumps(data))
             except:
                 dead.add(client)
-    for d in dead:
-        clients.discard(d)
+        for d in dead:
+            clients.discard(d)
 
 @sock.route('/ws')
 def chat(ws):
     with clients_lock:
         clients.add(ws)
-
     db_messages = Message.query.order_by(Message.id.desc()).limit(50).all()
     for msg in reversed(db_messages):
         packet = {
             'username': msg.username,
-            'message': decrypt(msg.message),
+            'message': msg.message,
             'image': msg.image,
             'time': msg.time
         }
@@ -75,7 +57,6 @@ def chat(ws):
             ws.send(json.dumps(packet))
         except:
             break
-
     try:
         while True:
             data = ws.receive()
@@ -86,7 +67,7 @@ def chat(ws):
                 packet['time'] = datetime.now().strftime('%H:%M')
                 new_msg = Message(
                     username=packet.get('username', 'Аноним'),
-                    message=encrypt(packet.get('message', '')),
+                    message=packet.get('message', ''),
                     image=packet.get('image', None),
                     time=packet['time']
                 )
@@ -94,7 +75,7 @@ def chat(ws):
                 db.session.commit()
                 broadcast(packet)
             except Exception as e:
-                print(f"Ошибка сохранения: {e}")
+                print(f"Ошибка: {e}")
     finally:
         with clients_lock:
             clients.discard(ws)
@@ -102,6 +83,25 @@ def chat(ws):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/sitemap.xml')
+def sitemap():
+    xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://my-flask-chat-wxxd.onrender.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>'''
+    return Response(xml, mimetype='application/xml')
+
+@app.route('/robots.txt')
+def robots():
+    txt = '''User-agent: *
+Allow: /
+Sitemap: https://my-flask-chat-wxxd.onrender.com/sitemap.xml'''
+    return Response(txt, mimetype='text/plain')
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
@@ -113,8 +113,6 @@ def admin():
     if not session.get('admin'):
         return render_template('admin_login.html', error=None)
     messages_list = Message.query.all()
-    for msg in messages_list:
-        msg.message = decrypt(msg.message)
     return render_template('admin.html', messages=messages_list, clients=len(clients))
 
 @app.route('/admin/clear', methods=['POST'])
