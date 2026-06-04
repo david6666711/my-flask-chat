@@ -1,67 +1,154 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Админка</title>
-    <style>
-        body { background: #0b0c10; color: #fff; font-family: 'Segoe UI', sans-serif; padding: 30px; margin: 0; }
-        h2 { color: #00d2ff; margin-bottom: 5px; }
-        .stats { color: #aaa; font-size: 14px; margin-bottom: 25px; }
-        .stats span { color: #fff; font-weight: bold; }
-        .top-bar { display: flex; gap: 10px; margin-bottom: 25px; }
-        a.btn, button.btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 8px 18px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 13px; }
-        button.btn-red { background: rgba(255,50,50,0.15); border-color: rgba(255,50,50,0.4); color: #ff5555; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; }
-        button.btn-red:hover { background: rgba(255,50,50,0.3); }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #aaa; font-size: 13px; }
-        td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; vertical-align: top; }
-        .del-btn { background: rgba(255,50,50,0.1); border: 1px solid rgba(255,50,50,0.3); color: #ff5555; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .del-btn:hover { background: rgba(255,50,50,0.25); }
-        .empty { color: #666; text-align: center; padding: 40px; }
-        img { max-width: 120px; border-radius: 6px; margin-top: 5px; }
-        .nick { color: #00d2ff; font-weight: bold; }
-        .time { color: #666; font-size: 12px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Админ-панель</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',sans-serif; background:#0f0f1a; color:#e0e0e0; }
+    .header { background:linear-gradient(135deg,#1a1a2e,#16213e); padding:16px 24px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #2a2a4a; }
+    .header h1 { color:#7c6af7; font-size:1.3rem; }
+    .header a { color:#666; text-decoration:none; font-size:0.85rem; }
+    .header a:hover { color:#fff; }
+    .stats { display:flex; gap:16px; padding:20px 24px; }
+    .stat { background:#1e1e3a; border:1px solid #2a2a4a; border-radius:12px; padding:16px 24px; text-align:center; flex:1; }
+    .stat .num { font-size:2rem; font-weight:700; color:#7c6af7; }
+    .stat .label { font-size:0.8rem; color:#666; margin-top:4px; }
+    .section { margin:0 24px 24px; }
+    .section h2 { font-size:1rem; color:#7c6af7; margin-bottom:12px; border-bottom:1px solid #2a2a4a; padding-bottom:8px; }
+    .announce-form { display:flex; gap:10px; margin-bottom:24px; }
+    .announce-form input { flex:1; padding:10px 16px; background:#1e1e3a; border:1px solid #2a2a4a; border-radius:10px; color:#fff; outline:none; }
+    .announce-form input:focus { border-color:#7c6af7; }
+    .announce-form button { padding:10px 20px; background:#7c6af7; border:none; border-radius:10px; color:#fff; cursor:pointer; }
+    .online-list { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; }
+    .online-tag { background:#1e1e3a; border:1px solid #4ade80; border-radius:20px; padding:6px 14px; font-size:0.85rem; display:flex; align-items:center; gap:8px; }
+    .online-tag::before { content:''; width:7px; height:7px; background:#4ade80; border-radius:50%; }
+    .online-tag form { display:inline; }
+    .online-tag button { background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.8rem; padding:0 2px; }
+    .ban-tag { border-color:#ef4444; }
+    .ban-tag::before { background:#ef4444; }
+    table { width:100%; border-collapse:collapse; background:#1e1e3a; border-radius:12px; overflow:hidden; }
+    th { background:#16213e; padding:10px 14px; text-align:left; font-size:0.8rem; color:#7c6af7; text-transform:uppercase; }
+    td { padding:10px 14px; border-bottom:1px solid #2a2a4a; font-size:0.85rem; vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    .msg-text { max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#ccc; }
+    .btn { padding:5px 12px; border:none; border-radius:8px; cursor:pointer; font-size:0.8rem; }
+    .btn-red { background:#ef4444; color:#fff; }
+    .btn-orange { background:#f97316; color:#fff; }
+    .btn-purple { background:#7c6af7; color:#fff; }
+    .btn-green { background:#4ade80; color:#000; }
+    .btn-danger { background:#7f1d1d; color:#fca5a5; border:1px solid #ef4444; padding:8px 20px; border-radius:10px; cursor:pointer; }
+    .actions { display:flex; gap:6px; }
+    .clear-section { display:flex; justify-content:flex-end; margin-bottom:12px; }
+    .empty { text-align:center; color:#444; padding:32px; }
+  </style>
 </head>
 <body>
-    <h2>⚙️ Панель администратора</h2>
-    <div class="stats">Онлайн: <span>{{ clients }}</span> &nbsp;|&nbsp; Сообщений: <span>{{ messages|length }}</span></div>
 
-    <div class="top-bar">
-        <a href="/" class="btn">🌍 Открыть чат</a>
-        <form method="POST" action="/admin/clear" style="margin:0;" onsubmit="return confirm('Очистить весь чат?')">
-            <button type="submit" class="btn-red">🗑️ Очистить чат</button>
-        </form>
-        <a href="/admin/logout" class="btn">Выйти</a>
+<div class="header">
+  <h1>⚙️ Админ-панель</h1>
+  <div style="display:flex;gap:16px;align-items:center">
+    <a href="/">← Чат</a>
+    <a href="/admin/logout">Выйти</a>
+  </div>
+</div>
+
+<!-- СТАТИСТИКА -->
+<div class="stats">
+  <div class="stat"><div class="num">{{ online_count }}</div><div class="label">Онлайн</div></div>
+  <div class="stat"><div class="num">{{ messages|length }}</div><div class="label">Сообщений</div></div>
+  <div class="stat"><div class="num">{{ banned|length }}</div><div class="label">Заблокировано</div></div>
+</div>
+
+<!-- ОБЪЯВЛЕНИЕ -->
+<div class="section">
+  <h2>📢 Объявление всем</h2>
+  <form class="announce-form" action="/admin/announce" method="post">
+    <input name="text" placeholder="Написать объявление в чат...">
+    <button type="submit">Отправить</button>
+  </form>
+</div>
+
+<!-- ОНЛАЙН -->
+<div class="section">
+  <h2>🟢 Сейчас онлайн</h2>
+  <div class="online-list">
+    {% for u in online %}
+    <div class="online-tag">
+      {{ u }}
+      <form action="/admin/kick/{{ u }}" method="post" style="display:inline">
+        <button type="submit" title="Кикнуть">✕</button>
+      </form>
+      <form action="/admin/ban/{{ u }}" method="post" style="display:inline">
+        <input type="hidden" name="reason" value="Кик/бан администратором">
+        <button type="submit" style="color:#f97316" title="Забанить">🚫</button>
+      </form>
     </div>
+    {% else %}
+    <span style="color:#444;font-size:0.85rem">Никого нет онлайн</span>
+    {% endfor %}
+  </div>
+</div>
 
-    <table>
-        <tr>
-            <th>#</th>
-            <th>Ник</th>
-            <th>Время</th>
-            <th>Сообщение</th>
-            <th>Картинка</th>
-            <th></th>
-        </tr>
-        {% if messages %}
-            {% for msg in messages %}
-            <tr>
-                <td class="time">{{ loop.index }}</td>
-                <td class="nick">{{ msg.username }}</td>
-                <td class="time">{{ msg.time }}</td>
-                <td>{{ msg.message or '—' }}</td>
-                <td>{% if msg.image %}<img src="{{ msg.image }}">{% else %}—{% endif %}</td>
-                <td>
-                    <form method="POST" action="/admin/delete/{{ loop.index0 }}" style="margin:0;">
-                        <button type="submit" class="del-btn">Удалить</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        {% else %}
-            <tr><td colspan="6" class="empty">Сообщений пока нет</td></tr>
-        {% endif %}
-    </table>
+<!-- ЗАБАНЕННЫЕ -->
+{% if banned %}
+<div class="section">
+  <h2>🚫 Заблокированные</h2>
+  <table>
+    <tr><th>Имя</th><th>Причина</th><th>Дата</th><th></th></tr>
+    {% for b in banned %}
+    <tr>
+      <td>{{ b.username }}</td>
+      <td style="color:#f97316">{{ b.reason }}</td>
+      <td style="color:#666">{{ b.banned_at }}</td>
+      <td>
+        <form action="/admin/unban/{{ b.username }}" method="post">
+          <button class="btn btn-green">Разбанить</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<!-- СООБЩЕНИЯ -->
+<div class="section">
+  <h2>💬 Сообщения</h2>
+  <div class="clear-section">
+    <form action="/admin/clear" method="post" onsubmit="return confirm('Удалить все сообщения?')">
+      <button class="btn-danger">🗑 Очистить весь чат</button>
+    </form>
+  </div>
+  {% if messages %}
+  <table>
+    <tr><th>#</th><th>Пользователь</th><th>Сообщение</th><th>Время</th><th></th></tr>
+    {% for msg in messages %}
+    <tr>
+      <td style="color:#444">{{ msg.id }}</td>
+      <td style="color:#7c6af7;font-weight:600">{{ msg.username }}</td>
+      <td class="msg-text">
+        {% if msg.image %}🖼 [Фото]{% else %}{{ msg.message }}{% endif %}
+      </td>
+      <td style="color:#666">{{ msg.time }}</td>
+      <td>
+        <div class="actions">
+          <form action="/admin/delete/{{ msg.id }}" method="post">
+            <button class="btn btn-red">Удалить</button>
+          </form>
+          <form action="/admin/ban/{{ msg.username }}" method="post">
+            <input type="hidden" name="reason" value="Нарушение правил">
+            <button class="btn btn-orange">Бан</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <div class="empty">Сообщений нет</div>
+  {% endif %}
+</div>
+
 </body>
 </html>
